@@ -1,0 +1,31 @@
+{
+  "name": "node-proxy",
+  "version": "1.0.0",
+  "description": "Proxy",
+  "dependencies": {
+    "http-proxy": "^1.11.1",
+    "lsq": "0.0.3",
+    "lsq-consul": "^1.0.0",
+    "promise": "^6.1.0",
+    "request": "^2.53.0",
+    "toobusy-js": "^0.4.1",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-babel": "^5.2.0",
+    "gulp-sourcemaps": "^1.5.2",
+    "gulp-standard": "^4.5.3"
+  },
+  "scripts": {
+    "start": "node lib/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "main": "lib/app.js",
+  "keywords": [
+    "proxy",
+    "microservice"
+  ],
+  "author": "lsqio",
+  "license": "MIT"
+}

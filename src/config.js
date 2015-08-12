@@ -1,0 +1,64 @@
+import Consul from 'lsq-consul'
+import lsq from 'lsq'
+import _ from 'underscore'
+import Events from 'events'
+
+let EventEmitter = Events.EventEmitter
+
+let SERVICE_NAME = process.env.SERVICE_NAME
+let CONSUL_HOST = process.env.CONSUL_HOST
+let CONSUL_PORT = process.env.CONSUL_PORT
+
+class Config extends EventEmitter {
+  constructor () {
+    super()
+    this.config = {}
+  }
+
+  toString () {
+    return this.config
+  }
+
+  init () {
+    return this.fetch()
+      .then(()=>this.keepUptodate())
+  }
+
+  fetch () {
+    return lsq.services.get(SERVICE_NAME)
+
+    .then(service=> {
+      if (_.isObject(service)) {
+        this.me = service
+      }
+      return
+    })
+    .then(()=> lsq.config.get())
+    .then(config=> {
+      this.config = config
+    })
+  }
+
+  keepUptodate () {
+    this._consul = new Consul({'host': CONSUL_HOST, 'port': CONSUL_PORT })
+    this._consulWatcher = this._consul.watch(this._consul.kv.get, {'key': SERVICE_NAME })
+    this._consulWatcher.on('change', result=> this.updateConfig(result))
+    this._consulWatcher.on('error', err=> console.error('consul watch:', err))
+    return this._consul
+  }
+
+  updateConfig (result) {
+
+    try {
+      if (!result) throw new Error('configuration not present')
+      this.config = JSON.parse(result.Value)
+      this.emit('updated', this.config)
+    } catch (e) {
+      this.config = this.config || {}
+    }
+  }
+}
+
+let config = new Config()
+
+module.exports = config

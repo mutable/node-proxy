@@ -1,0 +1,4 @@
+{
+    "isStartedWhen": "port",
+    "healthCheck": "/health"
+}
