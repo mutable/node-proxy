@@ -69,7 +69,28 @@ Hosts
   - example: http://lsq/health/helloworld of http://health/[*] becomes http://health/health/helloworld
 - surround a varible with {} so it can be used as a wildcard and used in the template of the domain
   - example: http://lsq/v2/users/pelle/uploads of http://upload/user/{userid} becomes http://upload/user/pelle
-
+- the stucture is 
+```json 
+{
+  // the url it is pointing to it can contain a service which it will be replaced with real host
+  "target": "http://example/",
+  // it will do a 302 redirect to target
+  "redirect": true, 
+  // it will replace the headers.host to the target host so other proxies know how to route
+  "changeHost":true,
+  // if there is a sub path you want to direct recursively 
+  "routes":{
+    "v1":{
+      "target": "http://example-1.com/[~]"
+      "routes":{
+        "{company}":{
+          "target": "http://company/{company}"
+        }
+      }
+    }
+  }
+}
+```
 
 Tokens
 ---
