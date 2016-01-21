@@ -20,8 +20,8 @@ class Config extends EventEmitter {
   }
 
   init () {
-    return this.fetch()
-      .then(()=>this.keepUptodate())
+    this.fetch()
+    return Promise.resolve(this.keepUptodate())
   }
 
   fetch () {
@@ -34,6 +34,12 @@ class Config extends EventEmitter {
       return
     })
     .then(()=> lsq.config.get())
+    .catch(e=> {
+      if (!this.config.hosts) {
+        setTimeout(()=> this.fetch(), 5000)
+      }
+      console.log(e)
+    })
     .then(config=> {
       this.config = config
     })
@@ -48,12 +54,17 @@ class Config extends EventEmitter {
   }
 
   updateConfig (result) {
-
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: updateConfig', result)
+    }
     try {
       if (!result) throw new Error('configuration not present')
       this.config = JSON.parse(result.Value)
       this.emit('updated', this.config)
     } catch (e) {
+      if (process.env.DEBUG) {
+        console.log('DEBUG :: updateConfig JSON', e)
+      }
       this.config = this.config || {}
     }
   }

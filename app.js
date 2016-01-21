@@ -54,6 +54,7 @@ function updateList(){
 			list = config.list
 		}
 		catch (e) { 
+			console.log("ERROR PARSE:",e)
 			return list = {}
 		}
 	})

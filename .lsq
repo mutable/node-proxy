@@ -1,4 +1,5 @@
 {
     "isStartedWhen": "port",
-    "healthCheck": "/health"
+    "healthCheck": "/health",
+    "pin": true
 }

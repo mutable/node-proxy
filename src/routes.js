@@ -8,6 +8,9 @@ class Routes {
   }
 
   updateConfig (config) {
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: updateConfig:router : ', config)
+    }
     this.hosts = config.hosts || {}
     this.tokens = config.tokens || {}
     this.publish = config.publish || []
@@ -17,6 +20,9 @@ class Routes {
     return new Promise((resolve, reject)=> {
       url = Url.parse(url)
       let host = this.hosts[url.hostname.toLowerCase()]
+      if (process.env.DEBUG) {
+        console.log('DEBUG :: getTarget : ', host, url, this.hosts)
+      }
       if (!host) return reject('No Hosts')
       let urlPath = (url.path[url.path.length - 1] === '/') ? url.path.substring(1, url.path.length - 1) : url.path.substring(1, url.path.length)
       let result = this.findTarget(host, urlPath.split('/'), {}, host.target, [])
@@ -70,6 +76,9 @@ class Routes {
   }
 
   applyTemplate (fullPath, currentPath, vars, host, headers) {
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: applyTemplate:pre : ', host, headers)
+    }
     let base = host.target
     let path = currentPath.join('/')
 
@@ -91,6 +100,7 @@ class Routes {
     host.target = base
 
     let url = Url.parse(base)
+
     if (url.hostname.indexOf('.') > -1) return Promise.resolve(host)
 
     let hybridPass = _.isObject(headers) ? _.findKey(this.tokens, token => token === headers['x-lsq']) : false
@@ -102,6 +112,9 @@ class Routes {
     }
 
     host.target = base
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: applyTemplate : ', host)
+    }
     return Promise.resolve(host)
   }
 

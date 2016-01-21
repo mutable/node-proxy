@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "Proxy",
   "dependencies": {
+    "basic-auth": "^1.0.3",
     "http-proxy": "^1.11.1",
-    "lsq": "0.0.3",
+    "lsq": "^1.0.0",
     "lsq-consul": "^1.0.0",
     "promise": "^6.1.0",
     "request": "^2.53.0",

@@ -10,7 +10,7 @@ import Url from 'url'
 
 class Proxy {
   constructor () {
-    this._proxy = httpProxy.createProxyServer({'ws': true, 'xfwd': true})
+    this._proxy = httpProxy.createProxyServer({'ws': true, 'xfwd': false})
     this.updateConfig({})
     this.startProxy()
   }
@@ -30,13 +30,17 @@ class Proxy {
   _isLocal (req, res) {
     if (req.headers.host !== (process.env.MYHOST || 'localhost') + ':' + process.env.PORT &&
       req.headers.host !== (process.env.MYHOST || '127.0.0.1') + ':' + process.env.PORT &&
-      req.headers.host !== (process.env.MYHOST || '0.0.0.0') + ':' + process.env.PORT) return false
+      req.headers.host !== (process.env.MYHOST || '0.0.0.0') + ':' + process.env.PORT &&
+      req.headers.host !== (process.env.HOSTNAME || '') + ':' + process.env.PORT) return false
     this._checkRoutes(req, res)
     return true
   }
 
   _proxyingWeb (req, res) {
     if (this._isLocal(req, res)) return
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: _proxyingWeb : ', req.headers.host + req.url)
+    }
     routes.getTarget('http://' + req.headers.host + req.url, req.headers)
       .then(host=> this._replaceServerUrl(host), ()=> this._routePage404(req, res))
       .done(host=> this._proxyWeb(req, res, host))
@@ -69,13 +73,20 @@ class Proxy {
     req.headers.host = req.headers.host || ''
     req.url = url.path
     url.pathname = ''
-    opt.target = Url.format(url)
+    opt.target = Url.format({ protocol: url.protocol, host: url.host})
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
+    }
     if (opt.redirect) this._webRedirect(req, res, opt)
     try {
-      req.headers['x-forwarded-for'] = req.connection.remoteAddress
+      this._setXHeaders(req)
       if (opt.changeHost) req.headers['host'] = url.host
 
+      if (process.env.DEBUG_HEADERS) {
+        console.log('DEBUG :: headers : ', req.headers)
+      }
       this._proxy.web(req, res, opt, (err, d)=> {
+        console.log(d)
         if (err && err.code) {
           if (err.code === 'ECONNREFUSED' && _.isFunction(cb)) cb()
           else if (!error) this._routePage404(req, res)
@@ -120,12 +131,35 @@ class Proxy {
 
   _replaceServerUrl (host) {
     let url = Url.parse(host.target)
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: _replaceServerUrl : ', url.hostname)
+    }
     return lsq.services.get(url.hostname)
       .then(service=> {
         url.host = service + ''
         host.target = (service ? Url.format(url) : host.target)
+        if (process.env.DEBUG) {
+          console.log('DEBUG :: _replaceServerUrlSuccess : ', host)
+        }
         return host
       }, ()=> host)
+  }
+
+  _setXHeaders (req) {
+    req.headers['x-forwarded-for'] = req.connection.remoteAddress
+    req.headers['x-forwarded-host'] = req.headers.host
+    req.headers['x-forwarded-port'] = this._getPort(req)
+    req.headers['x-forwarded-proto'] = (req.isSpdy || this._hasEncryptedConnection(req)) ? 'https' : 'http'
+
+  }
+
+  _getPort (req) {
+    var res = req.headers.host ? req.headers.host.match(/:(\d+)/) : ''
+
+    return res ? res[1] : this._hasEncryptedConnection(req) ? '443' : '80'
+  }
+  _hasEncryptedConnection (req) {
+    return Boolean(req.connection.encrypted || req.connection.pair)
   }
 }
 
