@@ -86,7 +86,6 @@ class Proxy {
         console.log('DEBUG :: headers : ', req.headers)
       }
       this._proxy.web(req, res, opt, (err, d)=> {
-        console.log(d)
         if (err && err.code) {
           if (err.code === 'ECONNREFUSED' && _.isFunction(cb)) cb()
           else if (!error) this._routePage404(req, res)
