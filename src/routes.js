@@ -1,6 +1,7 @@
-import Promise from 'promise'
-import Url from 'url'
-import _ from 'underscore'
+'use strict'
+let Promise = require('promise')
+let Url = require('url')
+let Path = require('path')
 
 class Routes {
   constructor () {
@@ -17,107 +18,173 @@ class Routes {
   }
 
   getTarget (url, headers) {
-    return new Promise((resolve, reject)=> {
       url = Url.parse(url)
-      let host = this.hosts[url.hostname.toLowerCase()]
+      //
+      // get the host based on key in config 
+      //
+      let template = this.hosts[url.hostname.toLowerCase()]
       if (process.env.DEBUG) {
-        console.log('DEBUG :: getTarget : ', host, url, this.hosts)
+        console.log('DEBUG :: getTarget : ', template, url, this.hosts)
       }
-      if (!host) return reject('No Hosts')
-      let urlPath = (url.path[url.path.length - 1] === '/') ? url.path.substring(1, url.path.length - 1) : url.path.substring(1, url.path.length)
-      let result = this.findTarget(host, urlPath.split('/'), {}, host.target, [])
-      resolve(this.applyTemplate(urlPath, result.currentPath, result.vars, this._newHost(result.host), headers))
-    })
+      if (!template) return Promise.reject('No Hosts')
+      //
+      // remove trailing / in url path
+      //
+      let fullUrlPath = (url.path[url.path.length - 1] === '/') ? url.path.substring(1, url.path.length - 1) : url.path.substring(1, url.path.length)
+      //
+      // look for the target/redirect it will push to
+      //
+      let result = this.findTarget(template,fullUrlPath)
+      // 
+      // Couldnt find a target
+      //
+      if (!result.template.target && !result.template.redirect) return Promise.reject('No Target/Redirect') 
+      //
+      // replace the target with template vars 
+      //
+      return Promise.resolve(this.applyTemplate(fullUrlPath, result.path, result.vars, result.template, headers))
   }
 
-  _newHost (host) {
-    let newHost = {
-      'target': host.target,
-      'redirect': host.redirect,
-      'changeHost': host.changeHost
-    }
-    return newHost
-  }
-
-  findTarget (host, path, vars, base, currentPath) {
-    if (!path.length || !_.isObject(host)) {
-      if (!_.isObject(host)) currentPath.pop()
-      return {vars, 'host': base, currentPath}
-    } else if (!host.routes) {
-      if (!host.target) {
-        currentPath.pop()
-        return {vars, 'host': base, currentPath}
-      }
-      return {vars, 'host': host, currentPath}
-    }
-
-    let pathPart = path.shift()
-    currentPath.push(pathPart)
-
-    let next = null
-    if (_.isObject(host.routes[pathPart])) next = host.routes[pathPart]
-
-    if (!next) {
-      let key = null
-      for (let k in host.routes) {
-        if (k[0] === '{') {
-          key = k
-          break
+  findTarget (host, path) {
+    let thePath = path.split('/')
+    let currentHost = Object.assign({}, host)
+    let vars = {}
+    let currentPathIndex = 0
+    let listTargets = []
+    let currentPath = []
+    if (currentHost.target || currentHost.redirect)
+        listTargets.push({template:currentHost, path:currentPath})
+    //
+    // iterate through the path to get the target
+    //
+    for (let l = thePath.length; currentPathIndex < l; currentPathIndex++ ) {
+      //
+      // if no routes end
+      //
+        if (!isObject(currentHost.routes)) break
+      //
+      // set current 
+      //
+      let segment = thePath[currentPathIndex]
+      let segHost = currentHost.routes[segment]
+      //
+      // if no route host then end 
+      //
+      if (!isObject(segHost)) {
+        let key = null
+        for (let k in currentHost.routes) {
+          if (k[0] === '{') {
+            key = k
+            break
+          }
         }
+        if (!key) break
+        segHost = currentHost.routes[key]
+        vars[key.substring(1, key.length - 1)] = segment
       }
-
-      if (!key) return this.findTarget(next, path, vars, next && next.target ? next : host || base, currentPath)
-
-      next = host.routes[key]
-      vars[key.substring(1, key.length - 1)] = pathPart
+      //
+      // set the next host to be currenthost 
+      //
+      currentHost = segHost
+      //
+      // if no target then go to the next
+      //
+      if (!segHost.target && !segHost.redirect) continue 
+      //
+      // add the level path your at
+      //
+      currentPath.push(segment)
+      //
+      //  add as possible targets
+      //
+      listTargets.push({template:segHost,path:[].concat(currentPath)})
     }
 
-    return this.findTarget(next, path, vars, next && next.target ? next : host || base, currentPath)
+    if (!listTargets.length) return {template:{}}
+    //
+    //  get the last valid target 
+    //
+    let lastEl = listTargets.pop()
+    return { vars, 
+      template: lastEl.template,
+      path: lastEl.path  
+    }
   }
 
-  applyTemplate (fullPath, currentPath, vars, host, headers) {
+  applyTemplate (fullPath, currentPath, vars, template, headers) {
     if (process.env.DEBUG) {
-      console.log('DEBUG :: applyTemplate:pre : ', host, headers)
+      console.log('DEBUG :: applyTemplate:pre : ', template,currentPath, headers)
     }
-    let base = host.target
+    template = template || {}
+    template = {
+      'target': template.target || "",
+      'redirect': template.redirect,
+      'changeHost': template.changeHost
+    }
+    //
+    // set base to 
+    //
+    let base = template.target 
     let path = currentPath.join('/')
 
     if (base.substring(base.length - 4, base.length) === '/[~]') {
-
+      //
+      //  remove suffix and add just the path that wasnt used in findtarget
+      //  EX: exmaple.com/images/a.jpg -> http://image/[~] = http://image/a.jpg
+      //
       base = base.substring(0, base.length - 4)
-      base = Url.resolve(base, fullPath.replace(path, ''))
+      let url = Url.parse(base)
+      base = Url.resolve(base, Path.join(url.path, fullPath.replace(path, '')))
 
     } else if (base.substring(base.length - 4, base.length) === '/[*]') {
-
+      //
+      //  remove suffix and add the whole path as is
+      //  EX: exmaple.com/images/a.jpg -> http://image/[*] = http://image/images/a.jpg
+      //
       base = base.substring(0, base.length - 4)
       base = Url.resolve(base, fullPath)
 
     }
-
+    //
+    // fill in the variables from template
+    //
     for (let key in vars)
-      base = base.replace('{' + key + '}', vars[key])
-
-    host.target = base
-
+      base = base.replace('%7B' + key + '%7D', vars[key])
+    //
+    // reset the changes to url back to target
+    //
+    template.target = base
     let url = Url.parse(base)
-
-    if (url.hostname.indexOf('.') > -1) return Promise.resolve(host)
-
-    let hybridPass = _.isObject(headers) ? _.findKey(this.tokens, token => token === headers['x-lsq']) : false
-    let hybridHost = _.isObject(headers) ? headers['x-lsq-host'] : false
+    //
+    // if there is . in hostname then exit now with that target
+    //
+    if (url.hostname.indexOf('.') > -1) return Promise.resolve(template)
+    //
+    // Check if there is a pass through token that ignores publish arr
+    //
+    let hybridPass = isObject(headers) ? Object.keys(this.tokens).filter(key => this.tokens[key] === headers['x-lsq']) : false
+    let hybridHost = isObject(headers) ? headers['x-lsq-host'] : false
+    //
+    // if pass through then do a direct mapping of org path to target path; ignore template 
+    //
     if (hybridHost && hybridPass) return Promise.resolve({'target': Url.resolve(hybridHost, fullPath)})
-
+    //
+    // checks to see if it is in the publish arr otherwise deny
+    //
     if (this.publish.indexOf(url.hostname) === -1 && !hybridPass) {
       return Promise.reject('Not Allowed')
     }
 
-    host.target = base
+    template.target = base
     if (process.env.DEBUG) {
-      console.log('DEBUG :: applyTemplate : ', host)
+      console.log('DEBUG :: applyTemplate : ', template)
     }
-    return Promise.resolve(host)
+    return Promise.resolve(template)
   }
 
 }
 
+function isObject(a) {
+  return typeof a === 'object'
+}
 module.exports = new Routes()

@@ -1,8 +1,7 @@
-import Consul from 'lsq-consul'
-import lsq from 'lsq'
-import _ from 'underscore'
-import Events from 'events'
-
+'use strict'
+let Consul = require('lsq-consul')
+let lsq = require('lsq')
+let Events = require('events')
 let EventEmitter = Events.EventEmitter
 
 let SERVICE_NAME = process.env.SERVICE_NAME
@@ -28,7 +27,7 @@ class Config extends EventEmitter {
     return lsq.services.get(SERVICE_NAME)
 
     .then(service=> {
-      if (_.isObject(service)) {
+      if (typeof service === 'object') {
         this.me = service
       }
       return

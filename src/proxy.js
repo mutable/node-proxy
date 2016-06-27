@@ -1,12 +1,10 @@
 'use strict'
-
-import lsq from 'lsq'
-import routes from './routes'
-import http from 'http'
-import httpProxy from 'http-proxy'
-import tooBusy from 'toobusy-js'
-import _ from 'underscore'
-import Url from 'url'
+let lsq = require('lsq')
+let routes = require('./routes')
+let http = require('http')
+let httpProxy = require('http-proxy')
+let tooBusy = require('toobusy-js')
+let Url = require('url')
 
 class Proxy {
   constructor () {
@@ -61,13 +59,13 @@ class Proxy {
     try {
       req.headers['x-forwarded-for'] = req.connection.remoteAddress
       this._proxy.ws(req, socket, head, opt, (err, d)=> {
-        if (err && err.code && err.code === 'ECONNREFUSED' && _.isFunction(cb)) cb()
+        if (err && err.code && err.code === 'ECONNREFUSED' && typeof cb === 'function') cb()
       })
     } catch (e) {}
   }
 
   _proxyWeb (req, res, opt, cb) {
-    if (!_.isObject(opt)) return this._checkRoutes(req, res)
+    if (!isObject(opt)) return this._checkRoutes(req, res)
     let error = false
     let url = Url.parse(opt.target)
     req.headers.host = req.headers.host || ''
@@ -77,7 +75,7 @@ class Proxy {
     if (process.env.DEBUG) {
       console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
     }
-    if (opt.redirect) this._webRedirect(req, res, opt)
+    if (opt.redirect) return this._webRedirect(req, res, opt)
     try {
       this._setXHeaders(req)
       if (opt.changeHost) req.headers['host'] = url.host
@@ -87,7 +85,7 @@ class Proxy {
       }
       this._proxy.web(req, res, opt, (err, d)=> {
         if (err && err.code) {
-          if (err.code === 'ECONNREFUSED' && _.isFunction(cb)) cb()
+          if (err.code === 'ECONNREFUSED' && typeof cb === 'function') cb()
           else if (!error) this._routePage404(req, res)
         }
       })
@@ -123,7 +121,7 @@ class Proxy {
 
   _sendWeb (res, content, code) {
     if (!res.headersSent) {
-      if (_.isNumber(code)) res.writeHead(code)
+      if (typeof code === 'number') res.writeHead(code)
       res.end(content)
     }
   }
@@ -161,7 +159,9 @@ class Proxy {
     return Boolean(req.connection.encrypted || req.connection.pair)
   }
 }
-
+function isObject(a) {
+  return typeof a === 'object'
+}
 let proxy = new Proxy()
 
 module.exports = proxy

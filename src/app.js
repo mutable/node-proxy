@@ -1,8 +1,8 @@
 'use strict'
 
-import config from './config'
-import routes from './routes'
-import proxy from './proxy'
+let config = require('./config')
+let routes = require('./routes')
+let proxy = require('./proxy')
 
 config.init()
   .then(()=> proxy.updateConfig(config.toString()))

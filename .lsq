@@ -1,5 +1,8 @@
 {
     "isStartedWhen": "port",
     "healthCheck": "/health",
-    "pin": true
+    "pin": true,
+    "test": "",
+    "build": "gulp",
+    "watchRestartService": true
 }
