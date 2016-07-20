@@ -31,10 +31,11 @@ class Routes {
       // remove trailing / in url path
       //
       let fullUrlPath = (url.path[url.path.length - 1] === '/') ? url.path.substring(1, url.path.length - 1) : url.path.substring(1, url.path.length)
+      let urlPathname = (url.pathname[url.pathname.length - 1] === '/') ? url.pathname.substring(1, url.pathname.length - 1) : url.pathname.substring(1, url.pathname.length)
       //
       // look for the target/redirect it will push to
       //
-      let result = this.findTarget(template,fullUrlPath)
+      let result = this.findTarget(template,urlPathname)
       // 
       // Couldnt find a target
       //
