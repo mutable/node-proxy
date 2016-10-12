@@ -114,7 +114,7 @@ class Routes {
 
   applyTemplate (fullPath, currentPath, vars, template, headers) {
     if (process.env.DEBUG) {
-      console.log('DEBUG :: applyTemplate:pre : ', template,currentPath, headers)
+      console.log('DEBUG :: applyTemplate:pre : ', vars, template, currentPath, headers)
     }
     template = template || {}
     template = {
@@ -150,7 +150,7 @@ class Routes {
     // fill in the variables from template
     //
     for (let key in vars)
-      base = base.replace('%7B' + key + '%7D', vars[key])
+      base = base.replace('%7B' + key + '%7D', vars[key]).replace('{' + key + '}', vars[key])
     //
     // reset the changes to url back to target
     //

@@ -7,6 +7,7 @@
     "http-proxy": "^1.11.1",
     "lsq": "^1.2.0",
     "lsq-consul": "^1.0.0",
+    "lsq-meta": "^1.0.0",
     "promise": "^6.1.0",
     "request": "^2.53.0",
     "toobusy-js": "^0.4.1"

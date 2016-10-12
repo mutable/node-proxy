@@ -1,10 +1,12 @@
 'use strict'
-let lsq = require('lsq')
+let Meta = require('lsq-meta')
 let routes = require('./routes')
 let http = require('http')
 let httpProxy = require('http-proxy')
 let tooBusy = require('toobusy-js')
 let Url = require('url')
+let isIp = new RegExp(/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):?([0-9]{1,5})?$/)
+
 
 class Proxy {
   constructor () {
@@ -26,10 +28,10 @@ class Proxy {
   }
 
   _isLocal (req, res) {
-    if (req.headers.host !== (process.env.MYHOST || 'localhost') + ':' + process.env.PORT &&
-      req.headers.host !== (process.env.MYHOST || '127.0.0.1') + ':' + process.env.PORT &&
-      req.headers.host !== (process.env.MYHOST || '0.0.0.0') + ':' + process.env.PORT &&
+     if (!isIp.test(req.headers.host) &&
+      req.headers.host !== (process.env.MYHOST || 'localhost') + ':' + process.env.PORT &&
       req.headers.host !== (process.env.HOSTNAME || '') + ':' + process.env.PORT) return false
+
     this._checkRoutes(req, res)
     return true
   }
@@ -131,8 +133,9 @@ class Proxy {
     if (process.env.DEBUG) {
       console.log('DEBUG :: _replaceServerUrl : ', url.hostname)
     }
-    return lsq.services.get(url.hostname)
+    return Meta.service(url.hostname)
       .then(service=> {
+        console.log(service)
         url.host = service + ''
         host.target = (service ? Url.format(url) : host.target)
         if (process.env.DEBUG) {
