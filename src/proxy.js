@@ -136,7 +136,7 @@ class Proxy {
     return Meta.service(url.hostname)
       .then(service=> {
         console.log(service)
-        url.host = service + ''
+        url.host = service[Math.random() * service.length | 0]
         host.target = (service ? Url.format(url) : host.target)
         if (process.env.DEBUG) {
           console.log('DEBUG :: _replaceServerUrlSuccess : ', host)
