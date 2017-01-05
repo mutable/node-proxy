@@ -1,8 +1,12 @@
 {
     "isStartedWhen": "port",
-    "healthCheck": "/health",
+    "healthCheck": "health",
     "pin": true,
     "test": "",
     "build": "gulp",
-    "watchRestartService": true
+    "watchRestartService": true,
+    "healthCheckType": "http",
+    "minContainers": 2,
+    "maxContainers": 5,
+    "memory": 512
 }

@@ -1,11 +1,12 @@
 'use strict'
-
-let config = require('./config')
+let Meta = require('lsq-meta')
 let routes = require('./routes')
 let proxy = require('./proxy')
+let config = {}
 
-config.init()
-  .then(()=> proxy.updateConfig(config.toString()))
-  .then(()=> config.on('updated', c=> proxy.updateConfig(c)))
-  .then(()=> routes.updateConfig(config.toString()))
-  .then(()=> config.on('updated', c=> routes.updateConfig(c)))
+Meta.config()
+  .then(c => config = c)
+  .then(() => proxy.updateConfig(config))
+  .then(() => Meta.on('configChange', c => proxy.updateConfig(c)))
+  .then(() => routes.updateConfig(config))
+  .then(() => Meta.on('configChange', c => routes.updateConfig(c)))
