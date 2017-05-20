@@ -127,7 +127,6 @@ class Routes {
     //
     let base = template.target 
     let path = currentPath.join('/')
-
     if (base.substring(base.length - 4, base.length) === '/[~]') {
       //
       //  remove suffix and add just the path that wasnt used in findtarget
@@ -136,7 +135,6 @@ class Routes {
       base = base.substring(0, base.length - 4)
       let url = Url.parse(base)
       base = Url.resolve(base, Path.join(url.path, fullPath.replace(path, '')))
-
     } else if (base.substring(base.length - 4, base.length) === '/[*]') {
       //
       //  remove suffix and add the whole path as is
