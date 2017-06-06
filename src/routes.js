@@ -39,7 +39,7 @@ class Routes {
       // 
       // Couldnt find a target
       //
-      if (!result.template.target && !result.template.redirect) return Promise.reject('No Target/Redirect') 
+      if (!result.template.target && !result.template.redirect && !result.template.content) return Promise.reject('No Target/Redirect/Content') 
       //
       // replace the target with template vars 
       //
@@ -53,7 +53,7 @@ class Routes {
     let currentPathIndex = 0
     let listTargets = []
     let currentPath = []
-    if (currentHost.target || currentHost.redirect)
+    if (currentHost.target || currentHost.redirect || currentHost.content)
         listTargets.push({template:currentHost, path:currentPath})
     //
     // iterate through the path to get the target
@@ -90,7 +90,7 @@ class Routes {
       //
       // if no target then go to the next
       //
-      if (!segHost.target && !segHost.redirect) continue 
+      if (!segHost.target && !segHost.redirect && !segHost.content) continue 
       //
       // add the level path your at
       //
@@ -120,12 +120,18 @@ class Routes {
     template = {
       'target': template.target || "",
       'redirect': template.redirect,
+      'content': template.content,
+      'statusCode': template.statusCode,
       'changeHost': template.changeHost
     }
     //
+    // if content just return don't care about url replacing
+    //
+    if(template.content) return Promise.resolve(template)
+    //
     // set base to 
     //
-    let base = template.target 
+    let base = template.target || template.redirect
     let path = currentPath.join('/')
     if (base.substring(base.length - 4, base.length) === '/[~]') {
       //
@@ -173,8 +179,14 @@ class Routes {
     if (this.publish.indexOf(url.hostname) === -1 && !hybridPass) {
       return Promise.reject('Not Allowed')
     }
+    //
+    // allow for redirect replace url like target
+    //
+    if(template.redirect)
+      template.redirect = base
+    else
+      template.target = base
 
-    template.target = base
     if (process.env.DEBUG) {
       console.log('DEBUG :: applyTemplate : ', template)
     }

@@ -78,6 +78,7 @@ class Proxy {
       console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
     }
     if (opt.redirect) return this._webRedirect(req, res, opt)
+    if (opt.content) return this._webContent(req, res, opt)
     try {
       this._setXHeaders(req)
       if (opt.changeHost) req.headers['host'] = url.host
@@ -100,10 +101,6 @@ class Proxy {
     res.end(tooBusy.lag() + '')
   }
 
-  _routePage404 (req, res) {
-    this._sendWeb(res, this._page404 || '404', 404)
-  }
-
   _checkRoutes (req, res) {
     let theUrlis = Url.parse('http://' + req.headers.host + req.url)
     switch (theUrlis.pathname) {
@@ -115,9 +112,17 @@ class Proxy {
     }
   }
 
+  _routePage404 (req, res) {
+    this._sendWeb(res, this._page404 || '404', 404)
+  }
+
+  _webContent (req, res, opt) {
+    this._sendWeb(res, opt.content, opt.statusCode || 200)
+  }
+
   _webRedirect (req, res, opt) {
     req.headers['location'] = Url.resolve(opt.target, req.url)
-    res.writeHead(302, req.headers)
+    res.writeHead(opt.statusCode || 302, req.headers)
     res.end()
   }
 
