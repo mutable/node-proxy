@@ -121,8 +121,7 @@ class Proxy {
   }
 
   _webRedirect (req, res, opt) {
-    req.headers['location'] = Url.resolve(opt.target, req.url)
-    res.writeHead(opt.statusCode || 302, req.headers)
+    res.writeHead(opt.statusCode || 302, {'location': Url.resolve(opt.target, req.url)})
     res.end()
   }
 
