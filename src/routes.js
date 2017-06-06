@@ -131,7 +131,7 @@ class Routes {
     //
     // set base to 
     //
-    let base = template.target || template.redirect
+    let base = template.target
     let path = currentPath.join('/')
     if (base.substring(base.length - 4, base.length) === '/[~]') {
       //
@@ -182,10 +182,6 @@ class Routes {
     //
     // allow for redirect replace url like target
     //
-    if(template.redirect)
-      template.redirect = base
-    else
-      template.target = base
 
     if (process.env.DEBUG) {
       console.log('DEBUG :: applyTemplate : ', template)
