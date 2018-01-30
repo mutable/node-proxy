@@ -50,6 +50,7 @@ class Routes {
     let thePath = path.split('/')
     let currentHost = Object.assign({}, host)
     let vars = {}
+    let query = ''
     let currentPathIndex = 0
     let listTargets = []
     let currentPath = []
@@ -139,8 +140,16 @@ class Routes {
       //  EX: exmaple.com/images/a.jpg -> http://image/[~] = http://image/a.jpg
       //
       base = base.substring(0, base.length - 4)
-      let url = Url.parse(base)
-      base = Url.resolve(base, Path.join(url.path, fullPath.replace(path, '')))
+      let url = Url.parse(base)      
+      let restOfPath = fullPath.replace(path, '')
+      let query = ''
+      if (restOfPath.length > 0 && restOfPath[0] == '?') {
+        query = restOfPath
+        restOfPath = ''
+      }
+        
+      base = Url.resolve(base, Path.join(url.path, restOfPath) + query)
+
     } else if (base.substring(base.length - 4, base.length) === '/[*]') {
       //
       //  remove suffix and add the whole path as is
