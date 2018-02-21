@@ -1,6 +1,6 @@
 {
   "name": "node-proxy",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Proxy",
   "dependencies": {
     "basic-auth": "^1.0.3",
