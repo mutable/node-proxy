@@ -46,24 +46,36 @@ class Proxy {
       .done(host=> this._proxyWeb(req, res, host))
   }
 
-  _proxyingWebSockets (req, res, socket, head) {
-    if (this._isLocal(req, res)) return
-    routes.getTarget('http://' + req.headers.host + req.url, req.headers)
-      .then(host=> this._replaceServerUrl(host), ()=> this._routePage404(req, res))
-      .done(host=> this._proxyWeb(req, res, host))
+  _proxyingWebSockets (req, socket, head) {
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: _proxyingWebSockets : ', req.headers.host + req.url)
+    }
+    routes.getTarget('ws://' + req.headers.host + req.url, req.headers)
+      .then(host=> this._replaceServerUrl(host,'ws'))
+      .done(host=> this._proxyWebSockets(req, socket, head, host))
   }
 
   _proxyWebSockets (req, socket, head, opt, cb) {
-    req.headers.host = req.headers.host || ''
+    let error = false
     let url = Url.parse(opt.target)
-    req.headers.host = req.headers.host || ''
     req.url = url.path
+    opt.target = Url.format({ protocol: url.protocol, host: url.host})
+    if (process.env.DEBUG) {
+      console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
+    }
     try {
-      req.headers['x-forwarded-for'] = req.connection.remoteAddress
+      this._setXHeaders(req)
+      if (opt.changeHost) req.headers['host'] = url.host
+      if (process.env.DEBUG_HEADERS) {
+        console.log('DEBUG :: headers : ', req.headers)
+      }
       this._proxy.ws(req, socket, head, opt, (err, d)=> {
         if (err && err.code && err.code === 'ECONNREFUSED' && typeof cb === 'function') cb()
       })
-    } catch (e) {}
+    } catch (e) {
+      error = true
+      console.error('error:: _proxyWebSockets: ',e)
+    }
   }
 
   _proxyWeb (req, res, opt, cb) {
@@ -132,13 +144,14 @@ class Proxy {
     }
   }
 
-  _replaceServerUrl (host) {
+  _replaceServerUrl (host, protocol) {
     let url = Url.parse(host.target)
     if (process.env.DEBUG) {
       console.log('DEBUG :: _replaceServerUrl : ', url.hostname)
     }
     return Meta.service(url.hostname)
       .then(service=> {
+        if (protocol) url.protocol = protocol
         url.host = service[Math.random() * service.length | 0]
         host.target = (service.length ? Url.format(url) : host.target)
         if (process.env.DEBUG) {
