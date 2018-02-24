@@ -1,11 +1,11 @@
 'use strict'
-let Meta = require('lsq-meta')
-let routes = require('./routes')
-let http = require('http')
-let httpProxy = require('http-proxy')
-let tooBusy = require('toobusy-js')
-let Url = require('url')
-let isIp = new RegExp(/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):?([0-9]{1,5})?$/)
+const Meta = require('@mutable/meta')
+const routes = require('./routes')
+const http = require('http')
+const httpProxy = require('http-proxy')
+const tooBusy = require('toobusy-js')
+const Url = require('url')
+const isIp = new RegExp(/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):?([0-9]{1,5})?$/)
 
 
 class Proxy {

@@ -3,9 +3,9 @@
   "version": "1.4.3",
   "description": "Proxy",
   "dependencies": {
+    "@mutable/meta": "^1.3.0",
     "basic-auth": "^1.0.3",
     "http-proxy": "^1.16.2",
-    "lsq-meta": "^1.3.1",
     "promise": "^6.1.0",
     "toobusy-js": "^0.4.1"
   },
