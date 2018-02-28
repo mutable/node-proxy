@@ -23,7 +23,7 @@ You must white list every service you want to access to the outside world think 
           "target": "http://www-2/[*]",
           "routes": {
             "status": {
-              "target": "http://status.aws.amazon.com"
+              "target": "http://status.aws.amazon.com",
               "redirect": true,
             }
             "users": {
