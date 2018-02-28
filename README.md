@@ -25,7 +25,7 @@ You must white list every service you want to access to the outside world think 
             "status": {
               "target": "http://status.aws.amazon.com",
               "redirect": true,
-            }
+            },
             "users": {
               "target": "http://user.com/[~]",
               "routes": {
