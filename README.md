@@ -81,7 +81,7 @@ Hosts
   // if there is a sub path you want to direct recursively 
   "routes":{
     "v1":{
-      "target": "http://example-1.com/[~]"
+      "target": "http://example-1.com/[~]",
       "routes":{
         "{company}":{
           "target": "http://company/{company}"
