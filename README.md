@@ -23,9 +23,9 @@ You must white list every service you want to access to the outside world think 
           "target": "http://www-2/[*]",
           "routes": {
             "status": {
-              "target": "http://status.aws.amazon.com"
+              "target": "http://status.aws.amazon.com",
               "redirect": true,
-            }
+            },
             "users": {
               "target": "http://user.com/[~]",
               "routes": {
@@ -81,7 +81,7 @@ Hosts
   // if there is a sub path you want to direct recursively 
   "routes":{
     "v1":{
-      "target": "http://example-1.com/[~]"
+      "target": "http://example-1.com/[~]",
       "routes":{
         "{company}":{
           "target": "http://company/{company}"

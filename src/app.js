@@ -1,7 +1,7 @@
 'use strict'
-let Meta = require('lsq-meta')
-let routes = require('./routes')
-let proxy = require('./proxy')
+const Meta = require('@mutable/meta')
+const routes = require('./routes')
+const proxy = require('./proxy')
 let config = {}
 
 Meta.config()

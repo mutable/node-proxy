@@ -1,7 +1,7 @@
 'use strict'
-let Promise = require('promise')
-let Url = require('url')
-let Path = require('path')
+const Promise = require('promise')
+const Url = require('url')
+const Path = require('path')
 
 class Routes {
   constructor () {
