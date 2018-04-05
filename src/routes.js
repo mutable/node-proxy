@@ -20,7 +20,7 @@ class Routes {
   getTarget (url, headers) {
       url = Url.parse(url)
       //
-      // get the host based on key in config 
+      // get the host based on key in config
       //
       let template = this.hosts[url.hostname.toLowerCase()]
       if (process.env.DEBUG) {
@@ -36,12 +36,12 @@ class Routes {
       // look for the target/redirect it will push to
       //
       let result = this.findTarget(template,urlPathname)
-      // 
+      //
       // Couldnt find a target
       //
-      if (!result.template.target && !result.template.redirect && !result.template.content) return Promise.reject('No Target/Redirect/Content') 
+      if (!result.template.target && !result.template.redirect && !result.template.content) return Promise.reject('No Target/Redirect/Content')
       //
-      // replace the target with template vars 
+      // replace the target with template vars
       //
       return Promise.resolve(this.applyTemplate(fullUrlPath, result.path, result.vars, result.template, headers))
   }
@@ -65,12 +65,12 @@ class Routes {
       //
         if (!isObject(currentHost.routes)) break
       //
-      // set current 
+      // set current
       //
       let segment = thePath[currentPathIndex]
       let segHost = currentHost.routes[segment]
       //
-      // if no route host then end 
+      // if no route host then end
       //
       if (!isObject(segHost)) {
         let key = null
@@ -85,13 +85,13 @@ class Routes {
         vars[key.substring(1, key.length - 1)] = segment
       }
       //
-      // set the next host to be currenthost 
+      // set the next host to be currenthost
       //
       currentHost = segHost
       //
       // if no target then go to the next
       //
-      if (!segHost.target && !segHost.redirect && !segHost.content) continue 
+      if (!segHost.target && !segHost.redirect && !segHost.content) continue
       //
       // add the level path your at
       //
@@ -104,12 +104,12 @@ class Routes {
 
     if (!listTargets.length) return {template:{}}
     //
-    //  get the last valid target 
+    //  get the last valid target
     //
     let lastEl = listTargets.pop()
-    return { vars, 
+    return { vars,
       template: lastEl.template,
-      path: lastEl.path  
+      path: lastEl.path
     }
   }
 
@@ -130,7 +130,7 @@ class Routes {
     //
     if(template.content) return Promise.resolve(template)
     //
-    // set base to 
+    // set base to
     //
     let base = template.target
     let path = currentPath.join('/')
@@ -140,14 +140,14 @@ class Routes {
       //  EX: exmaple.com/images/a.jpg -> http://image/[~] = http://image/a.jpg
       //
       base = base.substring(0, base.length - 4)
-      let url = Url.parse(base)      
+      let url = Url.parse(base)
       let restOfPath = fullPath.replace(path, '')
       let query = ''
       if (restOfPath.length > 0 && restOfPath[0] == '?') {
         query = restOfPath
         restOfPath = ''
       }
-        
+
       base = Url.resolve(base, Path.join(url.path, restOfPath) + query)
 
     } else if (base.substring(base.length - 4, base.length) === '/[*]') {
@@ -179,7 +179,7 @@ class Routes {
     let hybridPass = isObject(headers) ? Object.keys(this.tokens).filter(key => this.tokens[key] === headers['x-lsq']) : false
     let hybridHost = isObject(headers) ? headers['x-lsq-host'] : false
     //
-    // if pass through then do a direct mapping of org path to target path; ignore template 
+    // if pass through then do a direct mapping of org path to target path; ignore template
     //
     if (hybridHost && hybridPass) return Promise.resolve({'target': Url.resolve(hybridHost, fullPath)})
     //
