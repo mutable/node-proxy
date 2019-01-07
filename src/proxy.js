@@ -11,6 +11,8 @@ const isIp = new RegExp(/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25
 class Proxy {
   constructor () {
     this._proxy = httpProxy.createProxyServer({'ws': true, 'xfwd': false})
+    this._proxy.on('error', (err, req, res) => this._onError(err, req, res))
+    this._proxy.on('proxyRes', (proxyRes, req, res) => this._onProxyRes(proxyRes, req, res))
     this.updateConfig({})
     this.startProxy()
   }
@@ -38,21 +40,20 @@ class Proxy {
 
   _proxyingWeb (req, res) {
     if (this._isLocal(req, res)) return
-    if (process.env.DEBUG) {
-      console.log('DEBUG :: _proxyingWeb : ', req.headers.host + req.url)
-    }
-    routes.getTarget('http://' + req.headers.host + req.url, req.headers)
+    if (process.env.DEBUG) console.log('DEBUG :: _proxyingWeb : ', req.headers.host + req.url)
+    
+    this._timeTrack(req,'_proxyingWeb')
+
+    routes.getTarget(`http://${req.headers.host}${req.url}`)
       .then(host=> this._replaceServerUrl(host), ()=> this._routePage404(req, res))
       .done(host=> this._proxyWeb(req, res, host))
   }
 
-  _proxyingWebSockets (req, socket, head) {
-    if (process.env.DEBUG) {
-      console.log('DEBUG :: _proxyingWebSockets : ', req.headers.host + req.url)
-    }
-    routes.getTarget('ws://' + req.headers.host + req.url, req.headers)
-      .then(host=> this._replaceServerUrl(host,'ws'))
-      .done(host=> this._proxyWebSockets(req, socket, head, host))
+  _proxyingWebSockets (req, res, socket, head) {
+    if (this._isLocal(req, res)) return
+    routes.getTarget(`http://${req.headers.host}${req.url}`)
+      .then(host=> this._replaceServerUrl(host), ()=> this._routePage404(req, res))
+      .done(host=> this._proxyWeb(req, res, host))
   }
 
   _proxyWebSockets (req, socket, head, opt, cb) {
@@ -86,31 +87,47 @@ class Proxy {
     req.url = url.path
     url.pathname = ''
     opt.target = Url.format({ protocol: url.protocol, host: url.host})
-    if (process.env.DEBUG) {
-      console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
-    }
+    if (process.env.DEBUG) console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
+    
     if (opt.redirect) return this._webRedirect(req, res, opt)
     if (opt.content) return this._webContent(req, res, opt)
     try {
       this._setXHeaders(req)
       if (opt.changeHost) req.headers['host'] = url.host
 
-      if (process.env.DEBUG_HEADERS) {
-        console.log('DEBUG :: headers : ', req.headers)
-      }
-      this._proxy.web(req, res, opt, (err, d)=> {
-        if (err && err.code) {
-          if (err.code === 'ECONNREFUSED' && typeof cb === 'function') cb()
-          else if (!error) this._routePage404(req, res)
-        }
-      })
+      if (process.env.DEBUG_HEADERS) console.log('DEBUG :: headers : ', req.headers)
+
+      this._timeTrack(req, '_proxyWeb')
+      this._proxy.web(req, res, opt)
     } catch(e) {
+      this._timeTrack(req, '_proxyWeb catch')
       error = true
       this._routePage404(req, res)
     }
   }
+
+  _onError(err, req, res) {
+    this._timeTrack(req, '_onError')
+    if (!err || !err.code) return this._routePage500(req, res)
+    if (err.code === 'ECONNREFUSED') return this._routePage500(req, res,'Error with ECONNREFUSED') 
+    return this._routePage404(req, res)
+  }
+
+  _onProxyRes(proxyRes, req, res) {
+    this._timeTrack(req, '_onProxyRes')
+  }
+
   _routeHealthCheck (req, res) {
     res.end(tooBusy.lag() + '')
+  }
+
+  _timeTrack(req, label) {
+    if (!req.headers['timetrack']) return
+    if (req.headers['timetrack'] != '*' && req.headers['timetrack'] != req.url) return
+    if (!req.startTime) req.startTime = Date.now()
+    if (!req.startTimeRandom) req.startTimeRandom = Math.floor(Math.random() * (1000000 + 1) )
+
+    console.log(`TimeTrack :: ${label} :: http://${req.headers.host}${req.url} ${req.startTime}-${req.startTimeRandom} ${Date.now() - req.startTime}`)
   }
 
   _checkRoutes (req, res) {
@@ -126,6 +143,10 @@ class Proxy {
 
   _routePage404 (req, res) {
     this._sendWeb(res, this._page404 || '404', 404)
+  }
+
+  _routePage500(req, res, err) {
+    this._sendWeb(res, err || 'Something seems to be wrong' , 500)
   }
 
   _webContent (req, res, opt) {
@@ -146,17 +167,14 @@ class Proxy {
 
   _replaceServerUrl (host, protocol) {
     let url = Url.parse(host.target)
-    if (process.env.DEBUG) {
-      console.log('DEBUG :: _replaceServerUrl : ', url.hostname)
-    }
+    if (process.env.DEBUG) console.log('DEBUG :: _replaceServerUrl : ', url.hostname)
+    
     return Meta.service(url.hostname)
       .then(service=> {
         if (protocol) url.protocol = protocol
         url.host = service[Math.random() * service.length | 0]
         host.target = (service.length ? Url.format(url) : host.target)
-        if (process.env.DEBUG) {
-          console.log('DEBUG :: _replaceServerUrlSuccess : ', host)
-        }
+        if (process.env.DEBUG) console.log('DEBUG :: _replaceServerUrlSuccess : ', host)
         return host
       }, ()=> host)
   }
