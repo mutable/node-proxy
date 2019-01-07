@@ -41,7 +41,7 @@ class Proxy {
   _proxyingWeb (req, res) {
     if (this._isLocal(req, res)) return
     if (process.env.DEBUG) console.log('DEBUG :: _proxyingWeb : ', req.headers.host + req.url)
-    
+
     this._timeTrack(req,'_proxyingWeb')
 
     routes.getTarget(`http://${req.headers.host}${req.url}`)
@@ -61,15 +61,12 @@ class Proxy {
     let url = Url.parse(opt.target)
     req.url = url.path
     opt.target = Url.format({ protocol: url.protocol, host: url.host})
-    if (process.env.DEBUG) {
-      console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
-    }
+    if (process.env.DEBUG) console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
     try {
       this._setXHeaders(req)
       if (opt.changeHost) req.headers['host'] = url.host
-      if (process.env.DEBUG_HEADERS) {
-        console.log('DEBUG :: headers : ', req.headers)
-      }
+      if (process.env.DEBUG_HEADERS) console.log('DEBUG :: headers : ', req.headers)
+
       this._proxy.ws(req, socket, head, opt, (err, d)=> {
         if (err && err.code && err.code === 'ECONNREFUSED' && typeof cb === 'function') cb()
       })
@@ -88,7 +85,7 @@ class Proxy {
     url.pathname = ''
     opt.target = Url.format({ protocol: url.protocol, host: url.host})
     if (process.env.DEBUG) console.log('DEBUG :: _proxyWeb : ', opt.target + req.url)
-    
+
     if (opt.redirect) return this._webRedirect(req, res, opt)
     if (opt.content) return this._webContent(req, res, opt)
     try {
@@ -168,7 +165,7 @@ class Proxy {
   _replaceServerUrl (host, protocol) {
     let url = Url.parse(host.target)
     if (process.env.DEBUG) console.log('DEBUG :: _replaceServerUrl : ', url.hostname)
-    
+
     return Meta.service(url.hostname)
       .then(service=> {
         if (protocol) url.protocol = protocol
@@ -192,6 +189,7 @@ class Proxy {
 
     return res ? res[1] : this._hasEncryptedConnection(req) ? '443' : '80'
   }
+
   _hasEncryptedConnection (req) {
     return Boolean(req.connection.encrypted || req.connection.pair)
   }
