@@ -53,7 +53,7 @@ class Proxy {
     if (this._isLocal(req, res)) return
     routes.getTarget(`http://${req.headers.host}${req.url}`)
       .then(host=> this._replaceServerUrl(host), ()=> this._routePage404(req, res))
-      .done(host=> this._proxyWeb(req, res, host))
+      .done(host => this._proxyWebSockets(req, socket, head, host))
   }
 
   _proxyWebSockets (req, socket, head, opt, cb) {
