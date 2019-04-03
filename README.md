@@ -11,9 +11,8 @@ You must white list every service you want to access to the outside world think 
 
 ```json
 {
-
   "hosts": {
-    "lsq": {
+    "mutable.local": {
       "target": "http://www/[~]",
       "routes": {
         "health": {
@@ -57,9 +56,6 @@ You must white list every service you want to access to the outside world think 
 }
 ```
 
-
-
-
 Hosts
 ---
 - the list of hosts and the routes that map to a service 
@@ -94,7 +90,7 @@ Hosts
 
 Tokens
 ---
-use to go through to unpublished services 
+Use to go through to unpublished services 
 in the Headers you just add a "x-lsq" with one of the tokens and you can proxy to the service
 example: "x-lsq: 1234567890" 
 Also you can use "x-lsq-host" with a token to proxy to any host or service 
@@ -109,4 +105,26 @@ Page404
 ---
 Is a custom 404 page that you can customize how you would like there is a default so you dont need to put one.
 
-  
+Custom IP Addresses as Host
+---
+This is useful for local development when you want to use external devices to access local development API endpoints. 
+
+This is done by specifying a custom host IP address as the 'MYIP' env variable and adding the IP to the Service Configuration
+Example:
+`MYIP` as the env name and `192.168.1.123`
+
+```json
+{
+  "hosts": {
+    "mutable.local": {  },
+    "192.168.1.123": {  } // new
+  },
+  "token": {  },
+  "publish": [  ],
+  "page404": "<html>  </html>"
+}
+```
+
+Debug
+---
+You can enable debug mode by setting the `DEBUG` env variable to `true`.
