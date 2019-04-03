@@ -30,13 +30,13 @@ class Proxy {
   }
 
   _isLocal (req, res) {
-     if (!isIp.test(req.headers.host) &&
-      req.headers.host !== (process.env.MYHOST || 'localhost') + ':' + process.env.PORT &&
-      req.headers.host !== (process.env.HOSTNAME || '') + ':' + process.env.PORT) return false
+    if ((req.headers.host == (process.env.MYIP) + ':' + process.env.PORT) || !isIp.test(req.headers.host) &&
+    req.headers.host !== (process.env.MYHOST || 'localhost') + ':' + process.env.PORT &&
+    req.headers.host !== (process.env.HOSTNAME || '') + ':' + process.env.PORT) return false
 
-    this._checkRoutes(req, res)
-    return true
-  }
+  this._checkRoutes(req, res)
+  return true
+}
 
   _proxyingWeb (req, res) {
     if (this._isLocal(req, res)) return
