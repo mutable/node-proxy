@@ -131,7 +131,7 @@ class Proxy {
   }
 
   _proxyingWeb(req, res) {
-    if (!IsLocal) {
+    if (!IsLocal(req, res)) {
       DebugPrint('_proxyingWeb', req.headers.host + req.url);
       TimeTrack(req, '_proxyingWeb');
       this._routes
@@ -142,7 +142,7 @@ class Proxy {
   }
 
   _proxyingWebSockets(req, res, socket, head) {
-    if (!IsLocal) {
+    if (!IsLocal(req, res)) {
       this._routes
         .getTarget(`http://${req.headers.host}${req.url}`)
         .then(host => ReplaceServerUrl(host), () => RoutePage404(req, res))
