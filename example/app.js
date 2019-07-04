@@ -1,16 +1,13 @@
 const Meta = require('@mutable/meta');
-const Routes = require('./routes');
-const Proxy = require('./proxy');
+const { Proxy, Routes } = require('@mutable/proxy');
 
-let config = {};
 const routes = new Routes();
 const proxy = new Proxy();
 
 Meta.config()
   .then((c) => {
-    config = c;
-    proxy.updateConfig(config);
-    routes.updateConfig(config);
+    proxy.updateConfig(c);
+    routes.updateConfig(c);
     Meta.on('configChange', conf => proxy.updateConfig(conf));
     Meta.on('configChange', conf => routes.updateConfig(conf));
     return c;
