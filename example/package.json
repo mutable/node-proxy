@@ -6,7 +6,6 @@
   "author": "Ujjwal Sharma <usharma1998@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@mutable/meta": "^1.3.0",
     "@mutable/proxy": "file:.."
   }
 }

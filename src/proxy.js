@@ -1,5 +1,6 @@
 const fs = require('fs');
 const http = require('http');
+const path = require('path');
 const Url = require('url');
 
 const httpProxy = require('http-proxy');
@@ -9,9 +10,7 @@ const tooBusy = require('toobusy-js');
 const Routes = require('./routes');
 const { IsObject, DebugPrint, IsIP } = require('./utils');
 
-const routes = new Routes();
-
-const defaultPage404 = fs.readFileSync('../static/404.html');
+const defaultPage404 = fs.readFileSync(path.join(__dirname, '../static/404.html')).toString();
 
 function TimeTrack(req, label) {
   if (
@@ -108,16 +107,18 @@ function IsLocal(req, res) {
 }
 
 class Proxy {
-  constructor() {
+  constructor(config) {
     this._proxy = httpProxy.createProxyServer({ ws: true, xfwd: false });
     this._proxy.on('error', (err, req, res) => OnError(err, req, res));
     this._proxy.on('proxyRes', (proxyRes, req) => TimeTrack(req, '_onProxyRes'));
-    this.updateConfig({});
+    this._routes = new Routes(config);
+    if (config) this.updateConfig(config);
     this.startProxy();
   }
 
   updateConfig(config) {
     this._page404 = config.page404 || defaultPage404;
+    this._routes.updateConfig(config);
   }
 
   startProxy() {
@@ -133,7 +134,7 @@ class Proxy {
     if (!IsLocal) {
       DebugPrint('_proxyingWeb', req.headers.host + req.url);
       TimeTrack(req, '_proxyingWeb');
-      routes
+      this._routes
         .getTarget(`http://${req.headers.host}${req.url}`)
         .then(host => ReplaceServerUrl(host), () => RoutePage404(req, res))
         .done(host => this._proxyWeb(req, res, host));
@@ -142,7 +143,7 @@ class Proxy {
 
   _proxyingWebSockets(req, res, socket, head) {
     if (!IsLocal) {
-      routes
+      this._routes
         .getTarget(`http://${req.headers.host}${req.url}`)
         .then(host => ReplaceServerUrl(host), () => RoutePage404(req, res))
         .done(host => this._proxyWebSockets(req, socket, head, host));

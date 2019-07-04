@@ -52,8 +52,8 @@ function FindTarget(host, path) {
 }
 
 class Routes {
-  constructor() {
-    this.updateConfig({});
+  constructor(config) {
+    this.updateConfig(config);
   }
 
   updateConfig(config) {
