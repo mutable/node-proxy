@@ -64,20 +64,20 @@ class Routes {
   }
 
   getTarget(url, headers) {
-    url = Url.parse(url);
+    const parsedUrl = Url.parse(url);
 
     // get the host based on key in config
-    const template = this.hosts[url.hostname.toLowerCase()];
-    DebugPrint('getTarget', template, url, this.hosts);
+    const template = this.hosts[parsedUrl.hostname.toLowerCase()];
+    DebugPrint('getTarget', template, parsedUrl, this.hosts);
     if (!template) return Promise.reject(new Error('No matching hosts'));
 
     // remove trailing / in url path
-    const fullUrlPath = url.path[url.path.length - 1] === '/'
-      ? url.path.substring(1, url.path.length - 1)
-      : url.path.substring(1, url.path.length);
-    const urlPathname = url.pathname[url.pathname.length - 1] === '/'
-      ? url.pathname.substring(1, url.pathname.length - 1)
-      : url.pathname.substring(1, url.pathname.length);
+    const fullUrlPath = parsedUrl.path[parsedUrl.path.length - 1] === '/'
+      ? parsedUrl.path.substring(1, parsedUrl.path.length - 1)
+      : parsedUrl.path.substring(1, parsedUrl.path.length);
+    const urlPathname = parsedUrl.pathname[parsedUrl.pathname.length - 1] === '/'
+      ? parsedUrl.pathname.substring(1, parsedUrl.pathname.length - 1)
+      : parsedUrl.pathname.substring(1, parsedUrl.pathname.length);
 
     // look for the target/redirect it will push to
     const result = FindTarget(template, urlPathname);

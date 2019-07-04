@@ -1,18 +1,17 @@
+const fs = require('fs');
 const http = require('http');
 const Url = require('url');
 
 const httpProxy = require('http-proxy');
-const tooBusy = require('toobusy-js');
 const Meta = require('@mutable/meta');
+const tooBusy = require('toobusy-js');
 
 const Routes = require('./routes');
-const { IsObject, DebugPrint } = require('./utils');
+const { IsObject, DebugPrint, IsIP } = require('./utils');
 
 const routes = new Routes();
 
-const IsIP = new RegExp(
-  /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):?([0-9]{1,5})?$/,
-);
+const defaultPage404 = fs.readFileSync('../static/404.html');
 
 function TimeTrack(req, label) {
   if (
@@ -118,8 +117,7 @@ class Proxy {
   }
 
   updateConfig(config) {
-    this._page404 = config.page404
-      || "<html><head><style>h1{margin: auto; position: absolute; top: 0; left: 0; right: 0; bottom: 0; height: 100px; font-family: 'arial'; font-weight: 100; color: #555; text-align: center; }body{background:#000;}</style></head><body><h1>404 Not Found</h1></body></html>";
+    this._page404 = config.page404 || defaultPage404;
   }
 
   startProxy() {
