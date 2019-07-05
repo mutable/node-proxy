@@ -142,9 +142,9 @@ class Routes {
 
     // Check if there is a pass through token that ignores publish arr
     const hybridPass = IsObject(headers)
-      ? Object.keys(this.tokens).filter(key => this.tokens[key] === headers['x-lsq'])
+      ? Object.keys(this.tokens).filter(key => this.tokens[key] === headers['x-mut'])
       : false;
-    const hybridHost = IsObject(headers) ? headers['x-lsq-host'] : false;
+    const hybridHost = IsObject(headers) ? headers['x-mut-host'] : false;
 
     // if pass through then do a direct mapping of org path to target path; ignore template
     if (hybridHost && hybridPass) {
