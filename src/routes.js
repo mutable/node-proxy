@@ -53,7 +53,7 @@ function FindTarget(host, path) {
 
 class Routes {
   constructor(config) {
-    this.updateConfig(config);
+    if (config) this.updateConfig(config);
   }
 
   updateConfig(config) {

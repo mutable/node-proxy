@@ -102,8 +102,8 @@ class Proxy {
       DebugPrint('_proxyingWeb', req.headers.host + req.url);
       TimeTrack(req, '_proxyingWeb');
       this._routes
-        .getTarget(`http://${req.headers.host}${req.url}`)
-        .then(host => ReplaceServerUrl(host), () => RoutePage404(res))
+        .getTarget(`http://${req.headers.host}${req.url}`, req.headers)
+        .then(host => ReplaceServerUrl(host), () => this._routePage404(res))
         .done(host => this._proxyWeb(req, res, host));
     }
   }
@@ -111,8 +111,8 @@ class Proxy {
   _proxyingWebSockets(req, res, socket, head) {
     if (!this._isLocal(req, res)) {
       this._routes
-        .getTarget(`http://${req.headers.host}${req.url}`)
-        .then(host => ReplaceServerUrl(host), () => RoutePage404(res))
+        .getTarget(`http://${req.headers.host}${req.url}`, req.headers)
+        .then(host => ReplaceServerUrl(host), () => this._routePage404(res))
         .done(host => this._proxyWebSockets(req, socket, head, host));
     }
   }
@@ -160,7 +160,7 @@ class Proxy {
           this._proxy.web(req, res, opt);
         } catch (e) {
           TimeTrack(req, '_proxyWeb catch');
-          RoutePage404(res);
+          this._routePage404(res);
         }
       }
     } else {
