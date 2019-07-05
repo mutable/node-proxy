@@ -1,16 +1,17 @@
 # Mutable Proxy
 
-- Installation
-- Usage
-- Configuration
-  - Hosts
-    - Custom IP Addresses
-  - Token
-  - Publish
-  - Page 404
-  - Example
-- Environment
-- License
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+  - [Hosts](#hosts)
+  - [Token](#token)
+  - [Publish](#publish)
+  - [Page 404](#page-404)
+  - [Example](#example)
+- [Environment](#environment)
+  - [Debug Mode](#debug-mode)
+  - [Custom IP Addresses as Host](#custom-ip-addresses-as-host)
+- [License](#license)
 
 ## Installation
 
@@ -37,7 +38,7 @@ The config object may contain the following keys to specify the behavior of the 
 - `publish`
 - `page404`
 
-### Hosts
+### Hosts (`Object`)
 
 This is the list of hosts and the routes that map to a service.
 
@@ -45,31 +46,34 @@ This is the list of hosts and the routes that map to a service.
 
 **Example**
 
-`http://lsq/health/helloworld` of `http://health/[~]` becomes `http://health/helloworld`
+`http://todo/health/helloworld` of `http://health/[~]` becomes `http://health/helloworld`
 
 - You can use `[*]` at the end to add all the original path on top.
 
 **Example**
 
-`http://lsq/health/helloworld` of `http://health/[*]` becomes `http://health/health/helloworld`
+`http://todo/health/helloworld` of `http://health/[*]` becomes `http://health/health/helloworld`
 
 - You can surround a varible with {} so it can be used as a wildcard and used in the template of the domain.
 
 **Example**
 
-`http://lsq/v2/users/pelle/uploads` of `http://upload/user/{userid}` becomes `http://upload/user/pelle`
+`http://todo/v2/users/pelle/uploads` of `http://upload/user/{userid}` becomes `http://upload/user/pelle`
 
 The stucture is:
 
+- `target` (`string`) The URL it is pointing to. It can contain a service which will be replaced with real host.
+- `redirect` (`boolean`) It will do a 302 redirect to the target.
+- `changeHost` (`boolean`) It will replace the `headers.host` to the target host so other proxies know how to route.
+- `routes` (`Object`) If there is a sub path you want to direct recursively.
+
+Here's a sample:
+
 ```json
 {
-  // the url it is pointing to it can contain a service which it will be replaced with real host
   "target": "http://example/",
-  // it will do a 302 redirect to target
   "redirect": true,
-  // it will replace the headers.host to the target host so other proxies know how to route
   "changeHost":true,
-  // if there is a sub path you want to direct recursively
   "routes":{
     "v1":{
       "target": "http://example-1.com/[~]",
@@ -83,26 +87,6 @@ The stucture is:
 }
 ```
 
-#### Custom IP Addresses as Host
-This is useful for local development when you want to use external devices to access local development API endpoints.
-
-This is done by specifying a custom host IP address as the 'MYIP' env variable and adding the IP to the Service Configuration.
-
-**Example**
-
-`MYIP` as the env name and `192.168.1.123`
-
-```json
-{
-  "hosts": {
-    "mutable.local": {  },
-    "192.168.1.123": {  } // new
-  },
-  "token": {  },
-  "publish": [  ],
-  "page404": "<html>  </html>"
-}
-```
 
 ### Tokens (`{[index: string]: string}`)
 
@@ -179,7 +163,31 @@ A sample complete configurations object would look something like this:
 
 ## Environment
 
-There's only one environment variable, `DEBUG`, which can be set to `true` to turn on debug mode and recieve debug logs in the console.
+### Debug Mode
+
+In order to turn on debug mode, set `DEBUG` environment variable to `true`.
+
+### Custom IP Addresses as Host
+
+This is useful for local development when you want to use external devices to access local development API endpoints.
+
+This is done by specifying a custom host IP address as the 'MYIP' env variable and adding the IP to the Service Configuration.
+
+**Example**
+
+`MYIP` as the env name and `192.168.1.123`
+
+```json
+{
+  "hosts": {
+    "mutable.local": {  },
+    "192.168.1.123": {  }
+  },
+  "token": {  },
+  "publish": [  ],
+  "page404": "<html>  </html>"
+}
+```
 
 ## License
 
