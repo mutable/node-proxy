@@ -81,7 +81,7 @@ function OnError(err, req, res) {
   TimeTrack(req, '_onError');
   if (!err || !err.code) return RoutePage500(res);
   if (err.code === 'ECONNREFUSED') return RoutePage500(res, 'Error with ECONNREFUSED');
-  return RoutePage404(req, res);
+  return RoutePage404(res);
 }
 
 function CheckRoutes(req, res) {
@@ -91,7 +91,7 @@ function CheckRoutes(req, res) {
       res.end(`${tooBusy.lag()}`);
       break;
     default:
-      RoutePage404(req, res);
+      RoutePage404(res);
   }
 }
 
@@ -136,7 +136,7 @@ class Proxy {
       TimeTrack(req, '_proxyingWeb');
       this._routes
         .getTarget(`http://${req.headers.host}${req.url}`)
-        .then(host => ReplaceServerUrl(host), () => RoutePage404(req, res))
+        .then(host => ReplaceServerUrl(host), () => RoutePage404(res))
         .done(host => this._proxyWeb(req, res, host));
     }
   }
@@ -145,7 +145,7 @@ class Proxy {
     if (!IsLocal(req, res)) {
       this._routes
         .getTarget(`http://${req.headers.host}${req.url}`)
-        .then(host => ReplaceServerUrl(host), () => RoutePage404(req, res))
+        .then(host => ReplaceServerUrl(host), () => RoutePage404(res))
         .done(host => this._proxyWebSockets(req, socket, head, host));
     }
   }
@@ -193,7 +193,7 @@ class Proxy {
           this._proxy.web(req, res, opt);
         } catch (e) {
           TimeTrack(req, '_proxyWeb catch');
-          RoutePage404(req, res);
+          RoutePage404(res);
         }
       }
     } else {
