@@ -54,10 +54,6 @@ function RoutePage500(res, err) {
   SendWeb(res, err || 'Something seems to be wrong', 500);
 }
 
-function RoutePage404(res, content) {
-  SendWeb(res, content || '404', 404);
-}
-
 function HasEncryptedConnection(req) {
   return req.connection.encrypted || req.connection.pair;
 }
@@ -77,39 +73,10 @@ function SetXHeaders(req) {
   req.headers['x-forwarded-proto'] = req.isSpdy || HasEncryptedConnection(req) ? 'https' : 'http';
 }
 
-function OnError(err, req, res) {
-  TimeTrack(req, '_onError');
-  if (!err || !err.code) return RoutePage500(res);
-  if (err.code === 'ECONNREFUSED') return RoutePage500(res, 'Error with ECONNREFUSED');
-  return RoutePage404(res);
-}
-
-function CheckRoutes(req, res) {
-  const theUrlis = Url.parse(`http://${req.headers.host}${req.url}`);
-  switch (theUrlis.pathname) {
-    case '/health':
-      res.end(`${tooBusy.lag()}`);
-      break;
-    default:
-      RoutePage404(res);
-  }
-}
-
-function IsLocal(req, res) {
-  if (
-    req.headers.host === `${process.env.MYIP}:${process.env.PORT}`
-    || (!IsIP.test(req.headers.host)
-      && req.headers.host !== `${process.env.MYHOST || 'localhost'}:${process.env.PORT}`
-      && req.headers.host !== `${process.env.HOSTNAME || ''}:${process.env.PORT}`)
-  ) return false;
-  CheckRoutes(req, res);
-  return true;
-}
-
 class Proxy {
   constructor(config) {
     this._proxy = httpProxy.createProxyServer({ ws: true, xfwd: false });
-    this._proxy.on('error', (err, req, res) => OnError(err, req, res));
+    this._proxy.on('error', (err, req, res) => this._onError(err, req, res));
     this._proxy.on('proxyRes', (proxyRes, req) => TimeTrack(req, '_onProxyRes'));
     this._routes = new Routes(config);
     if (config) this.updateConfig(config);
@@ -131,7 +98,7 @@ class Proxy {
   }
 
   _proxyingWeb(req, res) {
-    if (!IsLocal(req, res)) {
+    if (!this._isLocal(req, res)) {
       DebugPrint('_proxyingWeb', req.headers.host + req.url);
       TimeTrack(req, '_proxyingWeb');
       this._routes
@@ -142,7 +109,7 @@ class Proxy {
   }
 
   _proxyingWebSockets(req, res, socket, head) {
-    if (!IsLocal(req, res)) {
+    if (!this._isLocal(req, res)) {
       this._routes
         .getTarget(`http://${req.headers.host}${req.url}`)
         .then(host => ReplaceServerUrl(host), () => RoutePage404(res))
@@ -197,8 +164,41 @@ class Proxy {
         }
       }
     } else {
-      CheckRoutes(req, res);
+      this._checkRoutes(req, res);
     }
+  }
+
+  _routePage404(res) {
+    SendWeb(res, this._page404 || '404', 404);
+  }
+
+  _onError(err, req, res) {
+    TimeTrack(req, '_onError');
+    if (!err || !err.code) return RoutePage500(res);
+    if (err.code === 'ECONNREFUSED') return RoutePage500(res, 'Error with ECONNREFUSED');
+    return this._routePage404(res);
+  }
+
+  _checkRoutes(req, res) {
+    const theUrlis = Url.parse(`http://${req.headers.host}${req.url}`);
+    switch (theUrlis.pathname) {
+      case '/health':
+        res.end(`${tooBusy.lag()}`);
+        break;
+      default:
+        this._routePage404(res);
+    }
+  }
+
+  _isLocal(req, res) {
+    if (
+      req.headers.host === `${process.env.MYIP}:${process.env.PORT}`
+      || (!IsIP.test(req.headers.host)
+        && req.headers.host !== `${process.env.MYHOST || 'localhost'}:${process.env.PORT}`
+        && req.headers.host !== `${process.env.HOSTNAME || ''}:${process.env.PORT}`)
+    ) return false;
+    this._checkRoutes(req, res);
+    return true;
   }
 }
 
