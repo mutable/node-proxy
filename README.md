@@ -172,7 +172,7 @@ In order to turn on debug mode, set `DEBUG` environment variable to `true`.
 
 This is useful for local development when you want to use external devices to access local development API endpoints.
 
-This is done by specifying a custom host IP address as the 'MYIP' env variable and adding the IP to the Service Configuration.
+This is done by specifying a custom host IP address as the `MYIP` env variable and adding the IP to the Service Configuration.
 
 **Example**
 
