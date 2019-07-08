@@ -42,32 +42,37 @@ The config object may contain the following keys to specify the behavior of the 
 
 This is the list of hosts and the routes that map to a service.
 
-- You can use `[~]` at the end for adding the rest of the path to your path.
-
-**Example**
-
-`http://todo/health/helloworld` of `http://health/[~]` becomes `http://health/helloworld`
-
-- You can use `[*]` at the end to add all the original path on top.
-
-**Example**
-
-`http://todo/health/helloworld` of `http://health/[*]` becomes `http://health/health/helloworld`
-
-- You can surround a varible with {} so it can be used as a wildcard and used in the template of the domain.
-
-**Example**
-
-`http://todo/v2/users/pelle/uploads` of `http://upload/user/{userid}` becomes `http://upload/user/pelle`
-
-The stucture is:
+#### Structure
 
 - `target` (`string`) The URL it is pointing to. It can contain a service which will be replaced with real host.
 - `redirect` (`boolean`) It will do a 302 redirect to the target.
 - `changeHost` (`boolean`) It will replace the `headers.host` to the target host so other proxies know how to route.
 - `routes` (`Object`) If there is a sub path you want to direct recursively.
 
-Here's a sample:
+A simple example usage would be along the lines of:
+
+```json
+{
+  "target": "http://google.com",
+  "redirect": true,
+  "changeHost": true
+}
+```
+
+Further, you can use the following rules for more advanced configuration.
+
+#### Rules
+
+- You can use `[~]` at the end for adding the rest of the path to your path.  
+**Example** `http://todo/health/helloworld` of `http://health/[~]` becomes `http://health/helloworld`
+
+- You can use `[*]` at the end to add all the original path on top.  
+**Example** `http://todo/health/helloworld` of `http://health/[*]` becomes `http://health/health/helloworld`
+
+- You can surround a varible with {} so it can be used as a wildcard and used in the template of the domain.  
+**Example** `http://todo/v2/users/pelle/uploads` of `http://upload/user/{userid}` becomes `http://upload/user/pelle`
+
+An advanced example usage using the above rules would be along the lines of:
 
 ```json
 {
@@ -90,25 +95,21 @@ Here's a sample:
 
 ### Tokens (`{[index: string]: string}`)
 
-Use these to go through to unpublished services. In the headers, you can just add a `"x-mut"` with one of the tokens and you can proxy to the service.
+Use these to go through to unpublished services.
 
-**Example**
+In the headers, you can just add a `"x-mut"` with one of the tokens and you can proxy to the service.  
+**Example** `"x-mut: 1234567890"`
 
-`x-mut: 1234567890`
-
-Also you can use `"x-mut-host"` with a token to proxy to any host or service.
-
-**Example**
-
-`"x-mut-host: http://health/"` will take that host and append the full path after
+Also you can use `"x-mut-host"` with a token to proxy to any host or service.  
+**Example** `"x-mut-host: http://health/"` will take that host and append the full path after
 
 ### Publish (`string[]`)
 
-It is a white list of services that can be reached by the outside world with no protection like a firewall you can use tokens to override it and access the service anyway.
+It is a white list of services that can be reached by the outside world with no protection like a firewall. You can use tokens to override it and access the service anyway.
 
 ### Page 404 (`string`)
 
-When specified, these would be the contents of your 404 page.
+When specified, these would be the contents of your custom 404 page.
 
 ### Example
 
