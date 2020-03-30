@@ -1,0 +1,11 @@
+{
+  "name": "mutable-proxy-example",
+  "version": "1.0.0",
+  "description": "Example usage of the mutable proxy module",
+  "main": "app.js",
+  "author": "Ujjwal Sharma <usharma1998@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@mutable/proxy": "file:.."
+  }
+}
