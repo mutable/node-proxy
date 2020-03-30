@@ -5,6 +5,10 @@
   "author": "pellepelle3",
   "license": "MIT",
   "main": "src/index.js",
+  "repository": {
+    "type":"git",
+    "url": "git@github.com:mutable/node-proxy.git"
+  },
   "dependencies": {
     "@mutable/meta": "^1.3.0",
     "http-proxy": "^1.16.2",
