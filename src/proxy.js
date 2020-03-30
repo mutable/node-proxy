@@ -11,6 +11,7 @@ const Routes = require('./routes');
 const { IsObject, DebugPrint, IsIP } = require('./utils');
 
 const defaultPage404 = fs.readFileSync(path.join(__dirname, '../static/404.html')).toString();
+const defaultPage401 = fs.readFileSync(path.join(__dirname, '../static/401.html')).toString();
 
 function TimeTrack(req, label) {
   if (
@@ -74,7 +75,9 @@ function SetXHeaders(req) {
 }
 
 class Proxy {
-  constructor(config) {
+  constructor(config, checkAuth) {
+    if (checkAuth && typeof checkAuth === 'function') this._checkAuth = checkAuth;
+    if (config) this.config = config;
     this._proxy = httpProxy.createProxyServer({ ws: true, xfwd: false });
     this._proxy.on('error', (err, req, res) => this._onError(err, req, res));
     this._proxy.on('proxyRes', (proxyRes, req) => TimeTrack(req, '_onProxyRes'));
@@ -85,6 +88,7 @@ class Proxy {
 
   updateConfig(config) {
     this._page404 = config.page404 || defaultPage404;
+    this._page401 = config.page401 || defaultPage401;
     this._routes.updateConfig(config);
   }
 
@@ -117,59 +121,81 @@ class Proxy {
     }
   }
 
-  _proxyWebSockets(req, socket, head, opt, cb) {
+  async _proxyWebSockets(req, socket, head, opt, cb) {
     const url = Url.parse(opt.target);
     req.url = url.path;
     opt.target = Url.format({ protocol: url.protocol, host: url.host });
-    DebugPrint('_proxyWeb', opt.target + req.url);
+    DebugPrint('_proxyWebSockets', opt.target + req.url);
+
+    if (this._checkAuth) {
+      try {
+        await this._checkAuth(req, opt, this.config);
+      } catch (e) {
+        DebugPrint('_proxyWebSockets', e);
+      }
+    }
+
     try {
       SetXHeaders(req);
       if (opt.changeHost) req.headers.host = url.host;
       DebugPrint('headers', req.headers);
 
-      this._proxy.ws(req, socket, head, opt, (err) => {
+      return this._proxy.ws(req, socket, head, opt, (err) => {
         if (err && err.code && err.code === 'ECONNREFUSED' && typeof cb === 'function') cb();
       });
     } catch (e) {
       console.error('error:: _proxyWebSockets: ', e);
+      return e;
     }
   }
 
-  _proxyWeb(req, res, opt) {
-    if (IsObject(opt)) {
-      const url = Url.parse(opt.target);
-      req.headers.host = req.headers.host || '';
-      req.url = url.path;
-      url.pathname = '';
-      opt.target = Url.format({ protocol: url.protocol, host: url.host });
-      DebugPrint('_proxyWeb', opt.target + req.url);
+  async _proxyWeb(req, res, opt) {
+    if (!IsObject(opt)) return this._checkRoutes(req, res);
 
-      if (opt.redirect) {
-        res.writeHead(opt.statusCode || 302, {
-          location: Url.resolve(opt.target, req.url),
-        });
-        res.end();
-      } else if (opt.content) {
-        SendWeb(res, opt.content, opt.statusCode || 200);
-      } else {
+    const url = Url.parse(opt.target);
+    req.headers.host = req.headers.host || '';
+    req.url = url.path;
+    url.pathname = '';
+    opt.target = Url.format({ protocol: url.protocol, host: url.host });
+    DebugPrint('_proxyWeb', opt.target + req.url);
+
+    if (opt.redirect) {
+      res.writeHead(opt.statusCode || 302, {
+        location: Url.resolve(opt.target, req.url),
+      });
+      res.end();
+    } else if (opt.content) {
+      SendWeb(res, opt.content, opt.statusCode || 200);
+    } else {
+      if (this._checkAuth) {
         try {
-          SetXHeaders(req);
-          if (opt.changeHost) req.headers.host = url.host;
-          DebugPrint('headers', req.headers);
-          TimeTrack(req, '_proxyWeb');
-          this._proxy.web(req, res, opt);
+          await this._checkAuth(req, opt, this.config);
         } catch (e) {
-          TimeTrack(req, '_proxyWeb catch');
-          this._routePage404(res);
+          DebugPrint('_proxyWeb', e);
+          this._routePage401(req, res);
         }
       }
-    } else {
-      this._checkRoutes(req, res);
+
+      try {
+        SetXHeaders(req);
+        if (opt.changeHost) req.headers.host = url.host;
+        DebugPrint('headers', req.headers);
+        TimeTrack(req, '_proxyWeb');
+        this._proxy.web(req, res, opt);
+      } catch (e) {
+        TimeTrack(req, '_proxyWeb catch');
+        this._routePage404(res);
+      }
     }
+    return res;
   }
 
   _routePage404(res) {
     SendWeb(res, this._page404 || '404', 404);
+  }
+
+  _routePage401(res) {
+    SendWeb(res, this._page401 || '401', 401);
   }
 
   _onError(err, req, res) {
