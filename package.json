@@ -1,12 +1,12 @@
 {
   "name": "@mutable/proxy",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "description": "Proxy",
   "author": "pellepelle3",
   "license": "MIT",
   "main": "src/index.js",
   "repository": {
-    "type":"git",
+    "type": "git",
     "url": "git@github.com:mutable/node-proxy.git"
   },
   "dependencies": {
