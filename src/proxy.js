@@ -172,7 +172,7 @@ class Proxy {
           await this._checkAuth(req, opt, this.config);
         } catch (e) {
           DebugPrint('_proxyWeb', e);
-          this._routePage401(req, res);
+          this._routePage401(res);
         }
       }
 
