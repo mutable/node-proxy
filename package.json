@@ -1,22 +1,31 @@
 {
-  "name": "node-proxy",
-  "version": "1.4.6",
+  "name": "@mutable/proxy",
+  "version": "2.1.0",
   "description": "Proxy",
+  "author": "pellepelle3",
+  "license": "MIT",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:mutable/node-proxy.git"
+  },
   "dependencies": {
     "@mutable/meta": "^1.3.0",
-    "basic-auth": "^1.0.3",
     "http-proxy": "^1.16.2",
     "promise": "^6.1.0",
     "toobusy-js": "^0.4.1"
   },
-  "scripts": {
-    "start": "node src/app.js"
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.0"
   },
-  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "lint": "eslint src/**/*.js"
+  },
   "keywords": [
     "proxy",
     "microservice"
-  ],
-  "author": "pellepelle3",
-  "license": "MIT"
+  ]
 }
