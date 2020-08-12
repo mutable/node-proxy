@@ -39,16 +39,18 @@ function SendWeb(res, content, code) {
 function ReplaceServerUrl(host, protocol) {
   const url = Url.parse(host.target);
   DebugPrint('_replaceServerUrl', url.hostname);
-  return Meta.service(url.hostname).then(
-    (service) => {
-      if (protocol) url.protocol = protocol;
-      url.host = service[(Math.random() * service.length) | 0];
-      host.target = service.length ? Url.format(url) : host.target;
-      DebugPrint('_replaceServerUrlSuccess', host);
-      return host;
-    },
-    () => host,
-  );
+  return host
+
+  // Meta.service(url.hostname).then(
+  //   (service) => {
+  //     if (protocol) url.protocol = protocol;
+  //     url.host = service[(Math.random() * service.length) | 0];
+  //     host.target = service.length ? Url.format(url) : host.target;
+  //     DebugPrint('_replaceServerUrlSuccess', host);
+  //     return host;
+  //   },
+  //   () => host,
+  // );
 }
 
 function RoutePage500(res, err) {
