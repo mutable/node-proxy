@@ -85,6 +85,9 @@ class Routes {
     // Couldnt find a target
     if (!result.template.target && !result.template.redirect && !result.template.content) return Promise.reject(new Error('No Target/Redirect/Content'));
 
+    // Gets forceHttps from the route root
+    result.template.forceHttps = template.forceHttps;
+
     // replace the target with template vars
     return Promise.resolve(
       this.applyTemplate(fullUrlPath, result.path, result.vars, result.template, headers),
@@ -100,6 +103,7 @@ class Routes {
       content: template.content,
       statusCode: template.statusCode,
       changeHost: template.changeHost,
+      forceHttps: template.forceHttps,
     };
 
     // if content just return don't care about url replacing
@@ -145,6 +149,10 @@ class Routes {
       ? Object.keys(this.tokens).filter(key => this.tokens[key] === headers['x-mut'])
       : false;
     const hybridHost = IsObject(headers) ? headers['x-mut-host'] : false;
+
+    if (headers['x-forwarded-proto'] === 'http' && template.forceHttps) {
+      return Promise.resolve({ statusCode: 301, redirect: true, target: Url.resolve(`https://${headers.host}`, fullPath) });
+    }
 
     // if pass through then do a direct mapping of org path to target path; ignore template
     if (hybridHost && hybridPass) {
