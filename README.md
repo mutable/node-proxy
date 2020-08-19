@@ -123,6 +123,7 @@ will be replaced with real host.
 - `changeHost` (`boolean`) It will replace the `headers.host` to the target host
 so other proxies know how to route.
 - `routes` (`Object`) If there is a sub path you want to direct recursively.
+- `forceHttps` (`boolean`) It will do a 301 redirect to https, defaults to false.
 
 A simple example usage would be along the lines of:
 
@@ -130,7 +131,8 @@ A simple example usage would be along the lines of:
 {
   "target": "http://google.com",
   "redirect": true,
-  "changeHost": true
+  "changeHost": true,
+  "forceHttps": true
 }
 ```
 
@@ -138,11 +140,11 @@ Further, you can use the following rules for more advanced configuration.
 
 #### Rules
 
-- You can use `[~]` at the end for adding the rest of the path to your path.  
+- You can use `[~]` at the end for adding the rest of the path to your path.
 **Example** `http://todo/health/helloworld` of `http://health/[~]` becomes
 `http://health/helloworld`
 
-- You can use `[*]` at the end to add all the original path on top.  
+- You can use `[*]` at the end to add all the original path on top.
 **Example** `http://todo/health/helloworld` of `http://health/[*]` becomes
 `http://health/health/helloworld`
 
@@ -157,7 +159,8 @@ An advanced example usage using the above rules would be along the lines of:
 {
   "target": "http://example/",
   "redirect": true,
-  "changeHost":true,
+  "changeHost": true,
+  "forceHttps": false,
   "routes":{
     "v1":{
       "target": "http://example-1.com/[~]",
@@ -176,10 +179,10 @@ An advanced example usage using the above rules would be along the lines of:
 
 Use these to go through to unpublished services.
 
-In the headers, you can just add a `"x-mut"` with one of the tokens and you can proxy to the service.  
+In the headers, you can just add a `"x-mut"` with one of the tokens and you can proxy to the service.
 **Example** `"x-mut: 1234567890"`
 
-Also you can use `"x-mut-host"` with a token to proxy to any host or service.  
+Also you can use `"x-mut-host"` with a token to proxy to any host or service.
 **Example** `"x-mut-host: http://health/"` will take that host and append the
 full path after
 
