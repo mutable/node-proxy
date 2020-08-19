@@ -39,6 +39,11 @@ function SendWeb(res, content, code) {
 function ReplaceServerUrl(host, protocol) {
   const url = Url.parse(host.target);
   DebugPrint('_replaceServerUrl', url.hostname);
+
+  if (url.hostname.indexOf('.') > -1) {
+    return Promise.resolve(host);
+  }
+
   return Meta.service(url.hostname).then(
     (service) => {
       if (protocol) url.protocol = protocol;
